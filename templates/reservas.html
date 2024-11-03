@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}
+Reservas
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <div class="row mt-4">
+      <div class="col">
+        <h1>Reservas</h1>
+      </div>
+    </div>
+    <form method="GET" action="/reservas">
+      <div class="row mt-4">
+        <div class="col">
+          <input type="text" class="form-control" name="sala" placeholder="Nome da Sala" aria-label="Nome da Sala">
+        </div>
+        <div class="col">
+          <input type="text" class="form-control" name="usuario" placeholder="Nome do Usuário" aria-label="Nome do Usuário">
+        </div>
+        <div class="col">
+          <button class="btn btn-dark" type="submit">Filtrar</button>
+        </div>
+      </div>
+    </form>
+    <div class="row mt-4">
+      <div class="col">
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Nome</th>
+              <th scope="col">Sala</th>
+              <th scope="col">Descrição</th>
+              <th scope="col">Data e Hora Início</th>
+              <th scope="col">Data e Hora Fim</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for reserva in reservas %}
+              <tr>
+                <td>{{ reserva['nome'] }}</td>
+                <td>{{ reserva['sala'] }}</td>
+                <td>{{ reserva['descricao'] }}</td>
+                <td>{{ reserva['inicio'] }}</td>
+                <td>{{ reserva['final'] }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}

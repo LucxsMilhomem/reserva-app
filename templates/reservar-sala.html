@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}
+Reservar Sala
+{% endblock %}
+
+{% block content %}
+
+  <div class="container">
+    <div class="row mt-4">
+      <div class="col">
+        <h1>Reservar Sala</h1>
+        <p>Utilize o formulário abaixo para reservar uma sala</p>
+      </div>
+    </div>
+    <div>
+      <div class="col">
+        <form action="/reservar_sala" method="POST">
+          <div class="mb-3">
+            <label for="sala" class="form-label">Sala</label>
+          <select class="form-select" id="sala" name="sala" required>
+            <option selected>Selecione a sala</option>
+            {% for sala in salas %}
+              <option value="{{ sala['Id'] }}">{{ sala['tipo'] }} - {{ sala['descricao'] }} (Capacidade: {{ sala['capacidade'] }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="inicio" class="form-label">Data e Hora Início</label>
+          <input type="datetime-local" class="form-control" name="inicio" id="inicio" required>
+        </div>
+        <div class="mb-3">
+          <label for="fim" class="form-label">Data e Hora Fim</label>
+          <input type="datetime-local" class="form-control" name="fim" id="fim" required>
+        </div>
+
+        {% if erro %}
+            <p class="text-danger">{{ erro }}</p>
+          {% endif %}
+        <button type="submit" class="btn btn-dark">Reservar</button>
+      </form>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}
