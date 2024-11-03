@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}
+Listar Salas
+{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <div class="row mt-4">
+      <div class="col">
+        <h1>Lista de Salas</h1>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Id</th>
+                <th scope="col">Tipo</th>
+                <th scope="col">Descrição</th>
+                <th scope="col">Capacidade</th>
+                <th scope="col">Ativa</th>
+                <th scope="col">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for sala in salas %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ sala['tipo'] }}</td>
+                <td>{{ sala['descricao'] }}</td>
+                <td>{{ sala['capacidade'] }}</td>
+                <td>{{ 'Sim' if sala['ativa'] else 'Não' }}</td>
+                <td>
+                  <form action="">
+                    <button class="btn btn-sm btn-dark" type="submit" formaction="/cadastrar_sala">Editar</button>
+                    <button class="btn btn-sm btn-dark" type="submit" formaction="/reservas">Desativar</button>
+                    <button class="btn btn-sm btn-dark" type="submit" formaction="/reservas">Excluir</button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

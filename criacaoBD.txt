@@ -1,0 +1,44 @@
+CREATE DATABASE IF NOT EXISTS reserva;
+USE reserva;
+
+CREATE TABLE IF NOT EXISTS usuario (
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100),
+    email VARCHAR(100) UNIQUE,
+    senha VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS salas (
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    tipo TEXT,
+    capacidade INT,
+    descricao TEXT,
+    ativa BOOLEAN
+);
+
+CREATE TABLE IF NOT EXISTS reservas (
+    Id INT AUTO_INCREMENT PRIMARY KEY,
+    Id_usuario INT NOT NULL,
+    Id_sala INT NOT NULL,
+    horario_inicio DATETIME NOT NULL,
+    horario_final DATETIME NOT NULL,
+    FOREIGN KEY (Id_usuario) REFERENCES usuario(Id) ON DELETE CASCADE,
+    FOREIGN KEY (Id_sala) REFERENCES salas(Id) ON DELETE CASCADE
+);
+
+INSERT INTO usuario (Id, nome, email, senha) VALUES
+(1, 'Lucas Milhomem', 'lucas@milhomem', '123456'),
+(2, Rafael Muñoz', 'rafa@munoz', 'abcdef'),
+(3, Pedro Mafra', 'pedro@mafra', 'aaaaaa');
+
+INSERT INTO salas (Id, tipo, capacidade, descricao, ativa) VALUES
+(1, 'Laboratório de Informática', 40, 'Lab 6 - Bloco C', 1),
+(2, 'Sala de Aula', 30, 'Sala 221 - Bloco A', 1),
+(3, 'Sala de Aula', 40, 'Sala 203 - Bloco A', 0),
+(4, 'Auditório', 50, 'Auditório IVO', 1),
+(5, 'Auditório', 70, 'Auditório REB', 1);
+
+INSERT INTO reservas (Id, Id_usuario, Id_sala, horario_inicio, horario_final) VALUES
+(1, 1, 1, '2024-11-05 10:15:00', '2024-11-05 11:45:00'),
+(2, 2, 4, '2024-11-09 14:00:00', '2024-11-09 15:15:00'),
+(3, 3, 2, '2024-11-07 07:00:00', '2024-11-07 08:15:00');
