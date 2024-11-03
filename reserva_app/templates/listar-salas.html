@@ -34,12 +34,14 @@ Listar Salas
                 <td>{{ sala['capacidade'] }}</td>
                 <td>{{ 'Sim' if sala['ativa'] else 'Não' }}</td>
                 <td>
-                  <form action="">
-                    <button class="btn btn-sm btn-dark" type="submit" formaction="/cadastrar_sala">Editar</button>
-                    <button class="btn btn-sm btn-dark" type="submit" formaction="/reservas">Desativar</button>
-                    <button class="btn btn-sm btn-dark" type="submit" formaction="/reservas">Excluir</button>
+                  <form action="" method="POST">
+                    <a href="{{ url_for('editar_sala', sala_id=sala['Id']) }}" class="btn btn-sm btn-dark">Editar</a>
+                    <a href="{{ url_for('alterar_status_sala', sala_id=sala['Id']) }}" class="btn btn-sm btn-dark">
+                      {{ 'Desativar' if sala['ativa'] else 'Ativar' }}
+                    </a>
+                    <a href="{{ url_for('excluir_sala', sala_id=sala['Id']) }}" class="btn btn-sm btn-dark">Excluir</a>
                   </form>
-                </td>
+                </td>                
               </tr>
               {% endfor %}
             </tbody>
