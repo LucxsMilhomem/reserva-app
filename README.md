@@ -39,6 +39,4 @@ Aplicação de exemplo para aulas sobre desenvolvimento web backend e criação 
   - data e hora início
   - data e hora fim
   - ativa
- 
-    Feito Por Lucas Milhomem, Rafaell Muñoz e Pedro Mafra
   
