@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, g, session
+from flask import Flask, render_template, request, redirect, g, session, url_for
 from funcoes_bd import *
 from conexao_bd import conexao_fechar, conexao_abrir
 from datetime import datetime
@@ -79,53 +79,49 @@ def listar_salas_form():
 def editar_sala(sala_id):
     con = get_db_connection()
     cursor = con.cursor()
-    cursor.execute('SELECT * FROM salas WHERE Id = ?', (sala_id,))
+    cursor.execute('SELECT * FROM salas WHERE Id = %s', (sala_id,))
     sala = cursor.fetchone()
 
     if request.method == "POST":
         tipo = request.form['tipo']
         descricao = request.form['descricao']
         capacidade = request.form['capacidade']
-        cursor.execute('UPDATE salas SET tipo = ?, descricao = ?, capacidade = ? WHERE Id = ?',
+        cursor.execute('UPDATE salas SET tipo = %s, descricao = %s, capacidade = %s WHERE Id = %s',
                        (tipo, descricao, capacidade, sala_id))
         con.commit()
         cursor.close()
-        return redirect("/listar_salas")
-
-    cursor.close()
+        return redirect(url_for('listar_salas_form'))
     return render_template("editar-sala.html", sala=sala)
+
 
 
 @app.route("/alterar_status_sala/<int:sala_id>")
 def alterar_status_sala(sala_id):
     con = get_db_connection()
-    cursor = con.cursor()
-    cursor.execute('SELECT * FROM salas WHERE id = ?', (sala_id,))
+    cursor = con.cursor(dictionary=True)
+    cursor.execute('SELECT * FROM salas WHERE id = %s', (sala_id,))
     sala = cursor.fetchone()
 
     if sala is None:
         cursor.close()
-        return redirect("/listar_salas")
-    
+        return redirect('/listar_salas')
+
     nova_atividade = not sala['ativa']
-    cursor.execute('UPDATE salas SET ativa = ? WHERE id = ?', (nova_atividade, sala_id))
+    cursor.execute('UPDATE salas SET ativa = %s WHERE id = %s', (nova_atividade, sala_id))
     con.commit()
     cursor.close()
 
-    return redirect("/listar_salas")
-
+    return redirect('/listar_salas')
 
 
 @app.route("/excluir_sala/<int:sala_id>")
 def excluir_sala(sala_id):
     con = get_db_connection()
     cursor = con.cursor()
-    cursor.execute('DELETE FROM salas WHERE id = ?', (sala_id,))
+    cursor.execute('DELETE FROM salas WHERE id = %s', (sala_id,))
     con.commit()
     cursor.close()
     return redirect("/listar_salas")
-
-
 
 
 @app.route("/reservar_sala", methods=["GET", "POST"])
