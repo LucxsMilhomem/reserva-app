@@ -75,6 +75,59 @@ def listar_salas_form():
     salas = listar_salas(con)
     return render_template("listar-salas.html", salas=salas)
 
+@app.route("/editar_sala/<int:sala_id>", methods=["GET", "POST"])
+def editar_sala(sala_id):
+    con = get_db_connection()
+    cursor = con.cursor()
+    cursor.execute('SELECT * FROM salas WHERE Id = ?', (sala_id,))
+    sala = cursor.fetchone()
+
+    if request.method == "POST":
+        tipo = request.form['tipo']
+        descricao = request.form['descricao']
+        capacidade = request.form['capacidade']
+        cursor.execute('UPDATE salas SET tipo = ?, descricao = ?, capacidade = ? WHERE Id = ?',
+                       (tipo, descricao, capacidade, sala_id))
+        con.commit()
+        cursor.close()
+        return redirect("/listar_salas")
+
+    cursor.close()
+    return render_template("editar-sala.html", sala=sala)
+
+
+@app.route("/alterar_status_sala/<int:sala_id>")
+def alterar_status_sala(sala_id):
+    con = get_db_connection()
+    cursor = con.cursor()
+    cursor.execute('SELECT * FROM salas WHERE id = ?', (sala_id,))
+    sala = cursor.fetchone()
+
+    if sala is None:
+        cursor.close()
+        return redirect("/listar_salas")
+    
+    nova_atividade = not sala['ativa']
+    cursor.execute('UPDATE salas SET ativa = ? WHERE id = ?', (nova_atividade, sala_id))
+    con.commit()
+    cursor.close()
+
+    return redirect("/listar_salas")
+
+
+
+@app.route("/excluir_sala/<int:sala_id>")
+def excluir_sala(sala_id):
+    con = get_db_connection()
+    cursor = con.cursor()
+    cursor.execute('DELETE FROM salas WHERE id = ?', (sala_id,))
+    con.commit()
+    cursor.close()
+    return redirect("/listar_salas")
+
+
+
+
 @app.route("/reservar_sala", methods=["GET", "POST"])
 def reservar_sala():
     con = get_db_connection()
@@ -84,18 +137,37 @@ def reservar_sala():
     
     if request.method == "POST":
         idUsuario = session.get('idUsuario')
-        sala = request.form['sala']
+        sala_id = request.form['sala']
         inicio = request.form['inicio']
         fim = request.form['fim']
 
         horainicio = datetime.fromisoformat(inicio)
         horafim = datetime.fromisoformat(fim)
 
-        if verificacao_conflito(con, sala, horainicio, horafim):
+        if verificacao_conflito(con, sala_id, horainicio, horafim):
             return render_template("reservar-sala.html", salas=salas_ativas, erro="Reserva Indisponível")
 
-        inserir_reserva(con, sala, idUsuario, inicio, fim)
-        return redirect("/reservas")
+        sala_reservada = next((sala for sala in salas_ativas if str(sala["Id"]) == sala_id), None)
+        descricao_sala = sala_reservada.get('descricao') if sala_reservada else ''
+        nome_sala = sala_reservada.get('tipo') if sala_reservada else ''
+
+        cursor = con.cursor(dictionary=True)
+        cursor.execute("SELECT nome FROM usuario WHERE Id = %s", (idUsuario,))
+        usuario_info = cursor.fetchone()
+        nome_usuario = usuario_info['nome'] if usuario_info else 'Usuário não encontrado'
+        
+        inserir_reserva(con, sala_id, idUsuario, inicio, fim)
+
+        session['detalhes_reserva'] = {
+            'sala': nome_sala,
+            'descricao': descricao_sala,
+            'usuario': nome_usuario,
+            'inicio': horainicio.strftime('%d/%m/%Y %H:%M'),
+            'fim': horafim.strftime('%d/%m/%Y %H:%M'),
+            'reserva_id': cursor.lastrowid
+        }
+
+        return redirect("/detalhe_reserva")
 
     return render_template("reservar-sala.html", salas=salas_ativas)
 
@@ -107,17 +179,63 @@ def reservas():
     reservas = filtrar_reservas(con, nome_filtro, sala_filtro)
     return render_template("reservas.html", reservas=reservas)
 
-@app.route("/detalhe_reserva")
+@app.route("/minhas_reservas")
+def minhas_reservas():
+    con = get_db_connection()
+    idUsuario = session.get('idUsuario')
+    reservas = filtrar_reservas(con, idUsuario, "")
+
+    return render_template("minhas-reservas.html", reservas=reservas)
+
+@app.route("/detalhe_reserva", methods=["GET", "POST"])
 def detalhe_reserva():
-    sala = request.args.get('sala')
-    usuarioRes = request.args.get('usuario')
-    inicio = request.args.get('inicio')
-    fim = request.args.get('fim')
-    iniDT = datetime.fromisoformat(inicio)
-    fimDT = datetime.fromisoformat(fim)
-    inicioDef = iniDT.strftime('%d/%m/%Y %H:%M')
-    fimDef = fimDT.strftime('%d/%m/%Y %H:%M')
-    return render_template("detalhe-reserva.html", sala=sala, usuario=usuarioRes, inicio=inicioDef, fim=fimDef)
+    if request.method == "POST":
+        reserva_id = request.form.get('reserva_id')
+        session['reserva_id'] = reserva_id
+        return redirect("/detalhe_reserva")
+
+    reserva_id = session.get('reserva_id')
+    con = get_db_connection()
+    cursor = con.cursor(dictionary=True)
+
+    cursor.execute("""SELECT usuario.nome AS usuario,
+                      reservas.Id, 
+                      salas.tipo AS sala, 
+                      salas.descricao, 
+                      reservas.horario_inicio AS inicio, 
+                      reservas.horario_final AS final 
+                      FROM reservas 
+                      JOIN salas ON reservas.Id_sala = salas.Id 
+                      JOIN usuario ON reservas.Id_usuario = usuario.Id 
+                      WHERE reservas.Id = %s""", (reserva_id,))
+    reserva = cursor.fetchone()
+
+    if reserva:
+        if isinstance(reserva['inicio'], str):
+            inicio = datetime.fromisoformat(reserva['inicio'])
+        else:
+            inicio = reserva['inicio']
+
+        if isinstance(reserva['final'], str):
+            fim = datetime.fromisoformat(reserva['final'])
+        else:
+            fim = reserva['final']
+
+        reserva['inicio'] = inicio.strftime('%d/%m/%Y %H:%M')
+        reserva['final'] = fim.strftime('%d/%m/%Y %H:%M')
+
+    cursor.close()
+    return render_template("detalhe-reserva.html", reserva=reserva)
+
+@app.route("/cancelar_reserva", methods=["POST"])
+def cancelar_reserva():
+    con = get_db_connection()
+    reserva_id = request.form.get('reserva_id')
+
+    if reserva_id:
+        deletar_reserva(con, reserva_id)  
+        session.pop('detalhes_reserva', None)  
+    return redirect("/reservas")
 
 if __name__ == "__main__":
     app.run(debug=True)

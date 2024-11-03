@@ -19,6 +19,13 @@ def inserir_reserva(con, Id_sala, Id_usuario, horario_inicio, horario_final):
     cursor.execute(sql, (Id_sala, Id_usuario, horario_inicio, horario_final))
     con.commit()
     cursor.close()
+    
+def deletar_reserva(con, reserva_id):
+    cursor = con.cursor()
+    sql = "DELETE FROM reservas WHERE Id = %s"
+    cursor.execute(sql, (reserva_id,))
+    con.commit()
+    cursor.close()
 
 def listar_salas(con):
     cursor = con.cursor(dictionary=True)
