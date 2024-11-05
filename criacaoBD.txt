@@ -28,8 +28,8 @@ CREATE TABLE IF NOT EXISTS reservas (
 
 INSERT INTO usuario (Id, nome, email, senha) VALUES
 (1, 'Lucas Milhomem', 'lucas@milhomem', '123456'),
-(2, Rafael Muñoz', 'rafa@munoz', 'abcdef'),
-(3, Pedro Mafra', 'pedro@mafra', 'aaaaaa');
+(2, 'Rafael Muñoz', 'rafa@munoz', 'abcdef'),
+(3, 'Pedro Mafra', 'pedro@mafra', 'aaaaaa');
 
 INSERT INTO salas (Id, tipo, capacidade, descricao, ativa) VALUES
 (1, 'Laboratório de Informática', 40, 'Lab 6 - Bloco C', 1),
