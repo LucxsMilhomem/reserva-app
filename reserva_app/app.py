@@ -48,7 +48,13 @@ def cadastrar_usuario():
         senha = request.form.get('password')
         
         con = get_db_connection()
+        verif, erro = verificar_cadastro(con, nome, email)
+        
+        if verif:
+            return render_template("cadastro.html", erro=erro)
+        
         inserir_usuario(con, nome, email, senha)
+        
         logado, id_usuario, nome_usuario = verificar_login(con, email, senha)
         if logado:
             session['idUsuario'] = id_usuario
@@ -142,35 +148,26 @@ def reservar_sala():
 
         if verificacao_conflito(con, sala_id, horainicio, horafim):
             return render_template("reservar-sala.html", salas=salas_ativas, erro="Reserva Indisponível")
-
-        sala_reservada = next((sala for sala in salas_ativas if str(sala["Id"]) == sala_id), None)
-        descricao_sala = sala_reservada.get('descricao') if sala_reservada else ''
-        nome_sala = sala_reservada.get('tipo') if sala_reservada else ''
-
-        cursor = con.cursor(dictionary=True)
-        cursor.execute("SELECT nome FROM usuario WHERE Id = %s", (idUsuario,))
-        usuario_info = cursor.fetchone()
-        nome_usuario = usuario_info['nome'] if usuario_info else 'Usuário não encontrado'
         
         inserir_reserva(con, sala_id, idUsuario, inicio, fim)
-
-        session['detalhes_reserva'] = {
-            'sala': nome_sala,
-            'descricao': descricao_sala,
-            'usuario': nome_usuario,
-            'inicio': horainicio.strftime('%d/%m/%Y %H:%M'),
-            'fim': horafim.strftime('%d/%m/%Y %H:%M'),
-            'reserva_id': cursor.lastrowid
-        }
-
+        
+        cursor = con.cursor(dictionary=True)
+        cursor.execute("SELECT Id FROM reservas WHERE Id_sala = %s AND Id_usuario = %s AND horario_inicio = %s AND horario_final = %s", (sala_id, idUsuario, inicio, fim))
+        reserva_Id = cursor.fetchone()
+        
+        session['reserva_id'] = reserva_Id['Id']
+        print(session['reserva_id'])
+        
+        print(reserva_Id)
+        
         return redirect("/detalhe_reserva")
 
     return render_template("reservar-sala.html", salas=salas_ativas)
 
 @app.route("/reservas", methods=["GET"])
 def reservas():
-    sala_filtro = request.args.get("sala", "")  
-    nome_filtro = request.args.get("usuario", "")   
+    sala_filtro = request.args.get('sala', "")  
+    nome_filtro = request.args.get('usuario', "")   
     con = get_db_connection()
     reservas = filtrar_reservas(con, nome_filtro, sala_filtro)
     return render_template("reservas.html", reservas=reservas)
@@ -178,7 +175,7 @@ def reservas():
 @app.route("/minhas_reservas")
 def minhas_reservas():
     con = get_db_connection()
-    idUsuario = session.get('idUsuario')
+    idUsuario = session.get('usuarioF')
     reservas = filtrar_reservas(con, idUsuario, "")
 
     return render_template("minhas-reservas.html", reservas=reservas)
@@ -189,6 +186,8 @@ def detalhe_reserva():
         reserva_id = request.form.get('reserva_id')
         session['reserva_id'] = reserva_id
         return redirect("/detalhe_reserva")
+    
+    print(session['reserva_id'])
 
     reserva_id = session.get('reserva_id')
     con = get_db_connection()

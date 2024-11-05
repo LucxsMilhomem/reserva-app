@@ -3,6 +3,9 @@
 {% block title %}Detalhes da Reserva{% endblock %}
 
 {% block content %}
+<form action="/detalhe_reserva" method="GET">
+    <input type="hidden" name="reserva_id" value="{{ reserva['Id'] }}"> 
+</form>
 <div class="row mt-4">
     <div class="col">
         <h1>Gerenciar Reserva</h1>

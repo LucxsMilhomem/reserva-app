@@ -3,7 +3,7 @@ from datetime import datetime
 
 def filtrar_reservas(con, usuario, sala):
     cursor = con.cursor(dictionary=True)
-    sql = "SELECT reservas.Id, usuario.nome AS nome, reservas.Id_sala, salas.tipo AS sala, salas.descricao, reservas.horario_inicio AS inicio, reservas.horario_final AS final FROM reservas JOIN salas ON reservas.Id_sala = salas.Id JOIN usuario ON reservas.Id_usuario = usuario.Id WHERE (usuario.nome LIKE CONCAT('%', %s, '%') AND salas.tipo LIKE CONCAT('%', %s, '%') OR salas.descricao LIKE CONCAT('%', %s, '%'))"
+    sql = "SELECT reservas.Id, usuario.nome AS nome, reservas.Id_sala, salas.tipo AS sala, salas.descricao, reservas.horario_inicio AS inicio, reservas.horario_final AS final FROM reservas JOIN salas ON reservas.Id_sala = salas.Id JOIN usuario ON reservas.Id_usuario = usuario.Id WHERE usuario.nome LIKE CONCAT('%', %s, '%') AND (salas.tipo LIKE CONCAT('%', %s, '%') OR salas.descricao LIKE CONCAT('%', %s, '%'))"
     cursor.execute(sql, (usuario, sala, sala))
     reservas = cursor.fetchall()  
     
@@ -83,6 +83,20 @@ def verificacao_conflito(con, sala, inicio, fim):
                 return True
     return False
 
+def verificar_cadastro(con, nome, email):
+    cursor = con.cursor(dictionary=True)
+    sql1 = "SELECT * FROM usuario WHERE nome = %s"
+    cursor.execute(sql1, (nome,))
+    nome = cursor.fetchone()
+    sql2 = "SELECT * FROM usuario WHERE email = %s"
+    cursor.execute(sql2, (email,))
+    email1 = cursor.fetchone()
+    cursor.close()
+    if nome:
+        return True, "Este nome já existe"
+    if email1:
+        return True, "Este email já existe"
+    return False, None
 
 def verificar_login(con, email, senha):
     cursor = con.cursor(dictionary=True)
